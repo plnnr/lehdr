@@ -117,13 +117,16 @@ workers_to_employment_area <- function(user_area.sf, summary_var = "S000", block
     filter(GEOID10 %in% work_selection) %>%
     pull(h_geocode) %>% unique()
   
-  block2hex %>% filter(GEOID10 %in% home_selection) %>% pull(hexid) %>% unique()
-  
-  ## TODO For this function, do I generate the hexgrids for home location or work location and return them to the user?
-  home_selection_hexid <- od.sf.w %>% 
-    st_set_geometry(NULL) %>%
-    filter(GEOID10 %in% work_selection) %>%
+  ## Get a list of hex IDs that match the home location of employment blocks in the user-defined shape
+  home_selection_hexid <- block2hex %>% 
+    filter(GEOID10 %in% home_selection) %>% 
     pull(hexid) %>% unique()
+  
+  ## Old way to do it that might have errors
+  # home_selection_hexid <- od.sf.w %>% 
+  #   st_set_geometry(NULL) %>%
+  #   filter(GEOID10 %in% work_selection) %>%
+  #   pull(hexid) %>% unique()
   
   ## Use RAC file to identify blocks with SOME employment and are NOT in the home selection; set the assumed zero values to actual zeros
   zero_workers_in_selection.df <- rac.df %>%
@@ -167,7 +170,9 @@ workers_to_employment_area <- function(user_area.sf, summary_var = "S000", block
   
   ## TODO Change to full_join if implicit zero-value hexbins are made explicitly zero
   home_hex_summary.sf <- home_hex_summary.df %>%
-    inner_join(hexgrid.sf, ., by = c("hexid" = "hexid_h"))
+    inner_join(hexgrid.sf, ., by = c("hexid" = "hexid_h")) %>%
+    arrange(desc(S000)) %>% 
+    distinct(., hexid, .keep_all = T)
   
   ##### Insert section here to return statistics or variables; could potentially 
   ### return list which would be input into generating Gi* maps; print or web or hex
@@ -229,7 +234,7 @@ workers_from_home_area <- function(user_area.sf, block_centroids.sf, orwablock.p
   return(summary_list) ## GEOID is the work destination block FIPS of residents commuting out of user-defined area
 }
 
-build_gistar <- function(summary_list, summary_var = "S000", method = "d", distance = 1.2, k.neighbors = 40, analysis_shape = "hex") {
+build_gistar <- function(summary_list, summary_var = "S000", method = "d", distance = 1.2, k.neighbors = 40, use_analysis_grid = TRUE) {
   ## Distance depends on projection of input data; when EPSG = 4269, 1.2 is in kilometers which is about 0.75 miles
   ## k.neighbors is set to 40 to capture the approximate number of blocks in a block group: 39 blocks per block group
   
@@ -237,10 +242,10 @@ build_gistar <- function(summary_list, summary_var = "S000", method = "d", dista
   
   ## Get local varnames for summary and user-defined geography; ensure correct projection
   ## TODO write if-then statement to convert to 4269 if it's not already
-  if(analysis_shape == "hex"){
+  if(use_analysis_grid == TRUE){
     block_summary.sf <- summary_list$hex_summary
   }
-  else if(analysis_shape == "blocks"){
+  else {
     block_summary.sf <- summary_list$summary
   }
 
@@ -285,7 +290,7 @@ build_gistar <- function(summary_list, summary_var = "S000", method = "d", dista
   return(block_summary.sf)
 }
 
-build_webmap_census_blocks <- function(weighted_summary) {
+build_webmap_census_blocks <- function(weighted_summary, summary_var = "S000") {
   
   block_summary.sf <- weighted_summary
   
@@ -296,8 +301,7 @@ build_webmap_census_blocks <- function(weighted_summary) {
                            1.65, 1.96, 2.58, max(block_summary.sf$g)))
   
   ## TODO change employment via quo()
-  popup <- paste0("<strong>Employment (", as.character(summary_var[[2]]),"): </strong>", 
-                  summary_var_vector, 
+  popup <- paste0("<strong>Employment (", summary_var,"): </strong>", 
                   "<br/>", 
                   "<strong>Gi* z-score:</strong> ", 
                   as.character(round(block_summary.sf$g, 2)))
@@ -350,7 +354,7 @@ load_lodes_resources <- function() {
     dplyr::select(GEOID10, hexid, h_geocode, S000:SI03) %>% st_transform(4269) ; message("od.sf.w successfully joined")
   
   od.df <<- od.df %>%
-    left_join(., select(block2hex, GEOID10, hexid_h), by = c("w_geocode" = "GEOID10")) %>%
-    left_join(., select(block2hex, GEOID10, hexid_w), by = c("h_geocode" = "GEOID10")) ; message("od.df successfully joined")
+    left_join(., select(block2hex, GEOID10, hexid_h), by = c("h_geocode" = "GEOID10")) %>%
+    left_join(., select(block2hex, GEOID10, hexid_w), by = c("w_geocode" = "GEOID10")) ; message("od.df successfully joined")
 }
 

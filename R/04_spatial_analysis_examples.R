@@ -31,17 +31,26 @@ my_work_area <- geojsonsf::geojson_sf("https://opendata.arcgis.com/datasets/65c5
   # filter(NAME == "Central Eastside Industrial")
   filter(NAME == "Columbia Corridor")
 
-home_area_summary <- workers_to_employment_area(user_area.sf = my_work_area, block_centroids.sf = block_centroids.sf,
-                                                orwablock.poly.sf = orwablock.poly.sf, od.df = od.df, od.sf.w = od.sf.w, rac.df = rac.df)
+home_area_summary <- workers_to_employment_area(user_area.sf = my_work_area, 
+                                                block_centroids.sf = block_centroids.sf,
+                                                blocks_poly_simple.sf = blocks_poly_simple.sf, 
+                                                od.df = od.df, 
+                                                od.sf.w = od.sf.w, 
+                                                rac.df = rac.df)
 
-gistar_summary <- build_gistar(home_area_summary)
+# gistar_summary <- build_gistar(home_area_summary)
 
-arc.write("E:/HCP/Tech_Services/Nick/TSUS/LUM_Leslie/east/commute_maps/data.gdb", gistar_summary %>% st_transform(2913))
+gistar_summary_hex <- build_gistar(home_area_summary, method = "k", k.neighbors = 18, analysis_shape = "hex") # k = 6 is nearest neighbor, 18 is second neighbor for hex
 
-commute_from_webmap <- build_webmap_census_blocks(gistar_summary)
+# mapview(gistar_summary_hex, zcol = "g")
+
+# commute_from_webmap <- build_webmap_census_blocks(gistar_summary)
+
+commute_from_webmap <- build_webmap_census_blocks(gistar_summary_hex)
 
 commute_from_webmap
 
+arc.write("E:/data.gdb", gistar_summary %>% st_transform(2913))
 
 # ##### Commute map example (where do the residents of a location work?) ####
 load_lodes_resources()
