@@ -3,7 +3,19 @@
 .RData
 .Ruserdata
 lodes_raw
+data/lodes_raw
+data/processed
+
 
 man/aggregate_lodes_df\.Rd
 doc
 Meta
+
+# OS generated files 
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
