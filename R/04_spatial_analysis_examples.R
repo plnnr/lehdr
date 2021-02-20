@@ -40,13 +40,14 @@ home_area_summary <- workers_to_employment_area(user_area.sf = my_work_area,
 
 # gistar_summary <- build_gistar(home_area_summary)
 
-gistar_summary_hex <- build_gistar(home_area_summary, method = "k", k.neighbors = 18, analysis_shape = "hex") # k = 6 is nearest neighbor, 18 is second neighbor for hex
+gistar_summary_hex <- build_gistar(home_area_summary, method = "k", k.neighbors = 18, use_analysis_grid = TRUE) # k = 6 is nearest neighbor, 18 is second neighbor for hex
 
-# mapview(gistar_summary_hex, zcol = "g")
+mapview(gistar_summary_hex, zcol = "g") +
+  mapview(my_work_area, alpha.regions = 0.1)
 
 # commute_from_webmap <- build_webmap_census_blocks(gistar_summary)
 
-commute_from_webmap <- build_webmap_census_blocks(gistar_summary_hex)
+commute_from_webmap <- build_webmap_census_blocks(gistar_summary_hex, user_area.sf = my_work_area)
 
 commute_from_webmap
 

@@ -290,7 +290,7 @@ build_gistar <- function(summary_list, summary_var = "S000", method = "d", dista
   return(block_summary.sf)
 }
 
-build_webmap_census_blocks <- function(weighted_summary, summary_var = "S000") {
+build_webmap_census_blocks <- function(weighted_summary, user_area.sf = NULL, summary_var = "S000") {
   
   block_summary.sf <- weighted_summary
   
@@ -329,7 +329,7 @@ load_lodes_resources <- function() {
   # working_hexgrid.sf <- hexgrid.sf %>%
   #   st_filter(., block_centroids.sf) ## TODO select only hexbins with any jobs by doing a spatial join and then removing the variables after determining selection
   
-  block2hex <- block_centroids.sf %>% 
+  block2hex <<- block_centroids.sf %>% 
     st_drop_geometry() %>%
     mutate(hexid_h = hexid,
            hexid_w = hexid) %>%
