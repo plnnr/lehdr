@@ -3,9 +3,9 @@
 .RData
 .Ruserdata
 lodes_raw
-data/lodes_raw
-data/processed
-data/shapes
+data/lodes_raw/*
+data/processed/*
+data/shapes/*
 
 
 man/aggregate_lodes_df\.Rd

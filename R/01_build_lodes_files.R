@@ -1,9 +1,9 @@
-pacman::p_load(tidyverse, lehdr, purrr)
+pacman::p_load(tidyverse, lehdr, purrr, furrr)
 
-# plan(multisession)
+plan(multisession)
 
 ## Modify variables in constants to change which states, counties, years and job type files are downloaded
-source("00_constants.R")
+source("R/00_constants.R")
 
 ###### WAC and RAC files first #######
 
@@ -25,14 +25,14 @@ inputs <- inputs %>%
   setNames(names(inputs))
 
 ## Helper function for `purrr::pmap_dfr` call below, which downloads lodes data for all year-state-lodes_type-job_type-segment combinations
-download_lodes_longitudinal <- function(state, year, lodes_type, job_type, segment, download_dir = "../data/lodes_raw") {
-  map_df(.x = year, 
-         .f = ~grab_lodes(state = state, 
-                          year = .x, 
-                          lodes_type = lodes_type, 
-                          job_type = job_type, 
-                          segment = segment,
-                          download_dir = download_dir)) %>%
+download_lodes_longitudinal <- function(state, year, lodes_type, job_type, segment, download_dir = "data/lodes_raw") {
+  furrr::future_map_dfr(.x = year, 
+                        .f = ~grab_lodes(state = state, 
+                                         year = .x, 
+                                         lodes_type = lodes_type, 
+                                         job_type = job_type, 
+                                         segment = segment,
+                                         download_dir = download_dir)) %>%
     mutate(segment = segment,
            job_type = job_type,
            lodes_type = lodes_type,
@@ -40,8 +40,8 @@ download_lodes_longitudinal <- function(state, year, lodes_type, job_type, segme
 }
 
 ## This will download all year-state-lodes_type-job_type-segment combinations. 
-statelodes <- pmap_dfr(.l = inputs,
-                       .f = ~download_lodes_longitudinal(..., state = STATES))
+statelodes <- purrr::pmap_dfr(.l = inputs,
+                              .f = ~download_lodes_longitudinal(..., state = STATES))
 
 ## Filter for the counties specified
 countieslodes <- statelodes %>%
